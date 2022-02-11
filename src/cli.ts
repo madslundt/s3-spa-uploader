@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync } from "fs";
-import s3SpaUpload, { CacheControlMapping } from "./index";
+import s3SpaUpload, { ICacheControlMapping, IMimeTypeMapping } from "./index";
 import yargs from "yargs";
 
 async function main() {
@@ -15,6 +15,9 @@ async function main() {
     .boolean("d")
     .alias("d", "delete")
     .describe("d", "Delete old files from the S3 bucket")
+    .boolean("v")
+    .alias("v", "verbose")
+    .describe("v", "Give verbose output")
     .describe(
       "cache-control-mapping",
       "Path to custom JSON file that maps glob patterns to cache-control headers"
@@ -28,20 +31,33 @@ async function main() {
     .string("prefix")
     .string("profile")
     .describe("profile", "AWS profile to use")
+    .describe(
+      "mime-type-mapping",
+      "Path to custom JSON file that maps glob patterns to mime-types"
+    )
+    .string("mime-type-mapping")
     .help()
     .wrap(88).argv;
 
-  let cacheControlMapping: CacheControlMapping | undefined;
+  let cacheControlMapping: ICacheControlMapping | undefined;
   if (args["cache-control-mapping"]) {
     cacheControlMapping = JSON.parse(
       readFileSync(args["cache-control-mapping"]).toString()
     );
   }
+  let mimeTypeMapping: IMimeTypeMapping | undefined;
+  if (args["mime-type-mapping"]) {
+    mimeTypeMapping = JSON.parse(
+      readFileSync(args["mime-type-mapping"]).toString()
+    );
+  }
   await s3SpaUpload(args.directory!, args.bucketname!, {
     delete: args.delete,
+    verbose: args.verbose,
     cacheControlMapping,
     prefix: args.prefix,
-    awsProfile: args.profile
+    awsProfile: args.profile,
+    mimeTypeMapping,
   });
 }
 

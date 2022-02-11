@@ -1,8 +1,9 @@
-# S3 SPA Upload
+# S3 SPA Uploader
+
+Fork of [s3-spa-upload](https://github.com/ottokruse/s3-spa-upload)
+
 
 Upload a Single Page Application (React, Angular, Vue, ...) to S3 with the right content-type and cache-control meta-data
-
-![Build Status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiQit5K1dqTW4zc2xYbnhOK3pFNU01dEtmM3gzODk4dmZaMDkvVVUzcHJjMWZHMmpCT05yaVEzT3I3WDZ1L25lcTI4QXFhUnlRbngrZTBsNmpwbWdCOEJJPSIsIml2UGFyYW1ldGVyU3BlYyI6ImZoY2c2aVA0ZHBKV1FxS24iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
 This requires the following AWS S3 permissions (see sample CloudFormation policy template below):
 
@@ -12,21 +13,29 @@ This requires the following AWS S3 permissions (see sample CloudFormation policy
 
 ## Installation
 
-To install globally (recommended):
+To install globally:
 
-    npm install -g s3-spa-upload
+    npm install -g s3-spa-uploader
+
+To install locally
+
+    npm install --save-dev s3-spa-uploader
 
 ## Command Line Usage
 
 Basic usage:
 
-    s3-spa-upload dist-dir my-s3-bucket-name
+    s3-spa-uploader dist-dir my-s3-bucket-name
+
+## The differences between s3-spa-uploader and s3-spa-upload:
+ - Works with Windows file paths
+ - Add MIME-type mapping
 
 ### Clean-up old files
 
 To also clean up old files, use the --delete option. This will delete all files in the bucket that are not included in the current upload (limited to the supplied prefix, see below):
 
-    s3-spa-upload dist-dir my-s3-bucket-name --delete
+    s3-spa-uploader dist-dir my-s3-bucket-name --delete
 
 ### Custom cache-control mapping
 
@@ -41,7 +50,7 @@ You can provide your desired cache-control mapping in a json file that contains 
 
 Suppose your mapping file is called `cache-control.json`:
 
-    s3-spa-upload dist-dir my-s3-bucket-name --cache-control-mapping cache-control.json
+    s3-spa-uploader dist-dir my-s3-bucket-name --cache-control-mapping cache-control.json
 
 If you don't provide a custom mapping, the default will be used, which should be okay for most SPA's, see below.
 
@@ -49,21 +58,22 @@ If you don't provide a custom mapping, the default will be used, which should be
 
 By default the SPA will be uploaded to the root of your S3 bucket. If you don't want this, specify the prefix to use:
 
-    s3-spa-upload dist-dir my-s3-bucket-name --prefix mobile
+    s3-spa-uploader dist-dir my-s3-bucket-name --prefix mobile
 
 Note that when used in conjunction with `--delete`, this means only old files matching that same prefix will be deleted.
 
 ## Programmatic Usage
 
 ```typescript
-import s3SpaUpload from 's3-spa-upload';
-// const s3SpaUpload = require('s3-spa-upload')
+import s3SpaUploader from 's3-spa-uploader';
+// const s3SpaUploader = require('s3-spa-uploader')
 
-s3SpaUpload('dir', 'bucket').catch(console.error);
+s3SpaUploader('dir', 'bucket').catch(console.error);
 
 // Can supply options:
 const options = {
     delete: true,
+    verbose: true,
     prefix: 'mobile',
     cacheControlMapping: {
         'index.html': 'no-cache',
@@ -73,9 +83,13 @@ const options = {
         accessKeyId: '...'
         secretAccessKey: '...'
         sessionToken: '...'
+    },
+    mimeTypeMapping: {
+        ".html": "text/html",
+        ".json": "application/json"
     }
 }
-s3SpaUpload('dir', 'bucket', options).catch(console.error);
+s3SpaUploader('dir', 'bucket', options).catch(console.error);
 ```
 
 ## Default Cache-Control settings
@@ -92,6 +106,14 @@ File/ext | Cache setting | Description
 ## Content-Type settings
 
 Based on file extensions using https://www.npmjs.com/package/mime-types
+
+You can also provide custom mime types (these have higher prioerty than the mime-types extension)
+```javascript
+{
+    ".html": "text/html",
+    ".json": "application/json"
+}
+```
 
 ## AWS Policy Template
 
